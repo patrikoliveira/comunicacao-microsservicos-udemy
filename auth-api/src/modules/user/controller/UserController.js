@@ -1,8 +1,13 @@
-import userService from "../service/userService.js";
+import UserService from "../service/userService.js";
 
 class UserController {
+  async getAccessToken(req, res) {
+    const accessToken = await UserService.getAccessToken(req);
+    return res.status(accessToken.status).json(accessToken);
+  }
+
   async findByEmail(req, res) {
-    let user = await userService.findByEmail(req);
+    let user = await UserService.findByEmail(req);
     return res.status(user.status).json(user);
   }
 }
