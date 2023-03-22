@@ -1,4 +1,4 @@
-package br.com.comunicacaomicrosservicosudemy.productapi.modulos.produto.model;
+package br.com.comunicacaomicrosservicosudemy.productapi.modules.produto.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,12 +9,12 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name= "CATEGORY")
-public class Category {
+@Table(name= "SUPPLIER")
+public class Supplier {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Integer id;
 
-    @Column(name = "DESCRIPTION", nullable = false)
-    private String description;
+    @Column(name = "NAME", nullable = false)
+    private String name;
 }
