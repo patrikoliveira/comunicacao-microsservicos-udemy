@@ -1,6 +1,6 @@
-package br.com.comunicacaomicrosservicosudemy.productapi.modules.produto.dto;
+package br.com.comunicacaomicrosservicosudemy.productapi.modules.category.dto;
 
-import br.com.comunicacaomicrosservicosudemy.productapi.modules.produto.model.Category;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.model.Category;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 

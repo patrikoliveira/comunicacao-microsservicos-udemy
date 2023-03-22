@@ -1,7 +1,6 @@
-package br.com.comunicacaomicrosservicosudemy.productapi.modules.produto.model;
+package br.com.comunicacaomicrosservicosudemy.productapi.modules.category.model;
 
-import br.com.comunicacaomicrosservicosudemy.productapi.modules.produto.dto.CategoryRequest;
-import br.com.comunicacaomicrosservicosudemy.productapi.modules.produto.dto.CategoryResponse;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.dto.CategoryRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
