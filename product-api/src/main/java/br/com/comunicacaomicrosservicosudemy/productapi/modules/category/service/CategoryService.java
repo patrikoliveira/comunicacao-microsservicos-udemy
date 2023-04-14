@@ -1,12 +1,14 @@
 package br.com.comunicacaomicrosservicosudemy.productapi.modules.category.service;
 
+import br.com.comunicacaomicrosservicosudemy.productapi.config.exception.SuccessResponse;
 import br.com.comunicacaomicrosservicosudemy.productapi.config.exception.ValidationException;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.dto.CategoryRequest;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.dto.CategoryResponse;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.model.Category;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.repository.CategoryRepository;
-import br.com.comunicacaomicrosservicosudemy.productapi.modules.supplier.model.Supplier;
-import org.springframework.beans.factory.annotation.Autowired;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.service.ProductService;
+import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,14 +17,15 @@ import java.util.stream.Collectors;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 @Service
+@AllArgsConstructor(onConstructor_ = { @Lazy})
 public class CategoryService {
-    @Autowired
     private CategoryRepository categoryRepository;
 
+    @Lazy
+    private ProductService productService;
+
     public Category findById(Integer id) {
-        if (isEmpty(id)) {
-            throw new ValidationException("The category ID was not informed.");
-        }
+        validateInformedId(id);
         return categoryRepository
                 .findById(id)
                 .orElseThrow(() -> new ValidationException("There's no category for the given ID."));
@@ -56,10 +59,37 @@ public class CategoryService {
         return CategoryResponse.of(category);
     }
 
+    public CategoryResponse update(CategoryRequest request, Integer id) {
+        validateInformedId(id);
+        validateCategoryNameInformed(request);
+
+        var category = Category.of(request);
+        category.setId(id);
+
+        categoryRepository.save(category);
+        return CategoryResponse.of(category);
+    }
+
     private void validateCategoryNameInformed(CategoryRequest request) {
         if (isEmpty(request.getDescription())) {
             throw new ValidationException("The category description was not informed.");
         }
     }
 
+    public SuccessResponse delete(Integer id) {
+        validateInformedId(id);
+
+        if (productService.existsByCategoryId(id)) {
+            throw new ValidationException("You cannot delete this category because it's already defined by a product.");
+        }
+
+        categoryRepository.deleteById(id);
+        return SuccessResponse.create("The category was deleted.");
+    }
+
+    private void validateInformedId(Integer id) {
+        if (isEmpty(id)) {
+            throw new ValidationException("The category ID must be informed.");
+        }
+    }
 }
