@@ -1,6 +1,7 @@
 package br.com.comunicacaomicrosservicosudemy.productapi.modules.product.controller;
 
 import br.com.comunicacaomicrosservicosudemy.productapi.config.exception.SuccessResponse;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductCheckStockRequest;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductRequest;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductResponse;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductSalesResponse;
@@ -52,6 +53,11 @@ public class ProductController {
     @DeleteMapping("{id}")
     public SuccessResponse delete(@PathVariable Integer id) {
         return productService.delete(id);
+    }
+
+    @PostMapping("check-stock")
+    public SuccessResponse checkProductStock(@RequestBody ProductCheckStockRequest request) {
+        return productService.checkProductsStock(request);
     }
 
     @GetMapping("{id}/sales")
