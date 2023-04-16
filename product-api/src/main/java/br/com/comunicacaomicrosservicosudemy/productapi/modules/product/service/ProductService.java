@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -170,6 +171,7 @@ public class ProductService {
 
     @Transactional
     private void updateStock(ProductStockDTO product) {
+        var productsForUpdate = new ArrayList<Product>();
         product
             .getProducts()
             .forEach(salesProduct -> {
@@ -177,11 +179,15 @@ public class ProductService {
                 validateQuantityInStock(salesProduct, existingProduct);
 
                 existingProduct.updateStock(salesProduct.getQuantity());
-                productRepository.save(existingProduct);
-
-                var approvedMessage = new SalesConfirmationDTO(product.getSalesId(), SalesStatus.APPROVED);
-                salesConfirmationSender.sendSalesConfirmationMessage(approvedMessage);
+                productsForUpdate.add(existingProduct);
             });
+
+        if (!isEmpty(productsForUpdate)) {
+            productRepository.saveAll(productsForUpdate);
+
+            var approvedMessage = new SalesConfirmationDTO(product.getSalesId(), SalesStatus.APPROVED);
+            salesConfirmationSender.sendSalesConfirmationMessage(approvedMessage);
+        }
     }
 
     private void validateQuantityInStock(ProductQuantityDTO salesProduct, Product existingProduct) {
