@@ -3,20 +3,28 @@ package br.com.comunicacaomicrosservicosudemy.productapi.modules.product.service
 import br.com.comunicacaomicrosservicosudemy.productapi.config.exception.SuccessResponse;
 import br.com.comunicacaomicrosservicosudemy.productapi.config.exception.ValidationException;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.service.CategoryService;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductQuantityDTO;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductRequest;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductResponse;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductStockDTO;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.model.Product;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.repository.ProductRepository;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.sales.dto.SalesConfirmationDTO;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.sales.enums.SalesStatus;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.sales.rabbitmq.SalesConfirmationSender;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.supplier.service.SupplierService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class ProductService {
@@ -25,6 +33,9 @@ public class ProductService {
     private ProductRepository productRepository;
     private SupplierService supplierService;
     private CategoryService categoryService;
+
+    @Autowired
+    private SalesConfirmationSender salesConfirmationSender;
 
 
     public ProductResponse findByIdResponse(Integer id) {
@@ -146,5 +157,57 @@ public class ProductService {
         }
     }
 
-    public void updateProductStock(ProductStockDTO product) {}
+    public void updateProductStock(ProductStockDTO product) {
+        try {
+            validateStockUpdateData(product);
+            updateStock(product);
+        } catch (Exception ex) {
+            log.error("Error while trying to update stock for message with error: {}", ex.getMessage(), ex);
+            var rejectMessage = new SalesConfirmationDTO(product.getSalesId(), SalesStatus.REJECTED);
+            salesConfirmationSender.sendSalesConfirmationMessage(rejectMessage);
+        }
+    }
+
+    @Transactional
+    private void updateStock(ProductStockDTO product) {
+        product
+            .getProducts()
+            .forEach(salesProduct -> {
+                var existingProduct = findById(salesProduct.getProductId());
+                validateQuantityInStock(salesProduct, existingProduct);
+
+                existingProduct.updateStock(salesProduct.getQuantity());
+                productRepository.save(existingProduct);
+
+                var approvedMessage = new SalesConfirmationDTO(product.getSalesId(), SalesStatus.APPROVED);
+                salesConfirmationSender.sendSalesConfirmationMessage(approvedMessage);
+            });
+    }
+
+    private void validateQuantityInStock(ProductQuantityDTO salesProduct, Product existingProduct) {
+        if (salesProduct.getQuantity() > existingProduct.getQuantityAvailable()) {
+            throw new ValidationException(
+                    String.format("The product %s is out of stock.", existingProduct.getId())
+            );
+        }
+    }
+
+
+    private void validateStockUpdateData(ProductStockDTO product) {
+        if (isEmpty(product) || isEmpty(product.getSalesId())) {
+            throw new ValidationException("The product data and the sales ID cannot be null.");
+        }
+        if (isEmpty(product.getProducts())) {
+            throw new ValidationException("The sales' products must be informed.");
+        }
+
+        product
+            .getProducts()
+            .forEach(salesProduct -> {
+                if (isEmpty(salesProduct.getQuantity())
+                   || isEmpty(salesProduct.getProductId())) {
+                    throw new ValidationException("The productID and the quantity must be informed.");
+                }
+            });
+    }
 }
