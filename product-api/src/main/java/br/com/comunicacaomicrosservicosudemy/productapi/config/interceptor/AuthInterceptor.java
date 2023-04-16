@@ -1,4 +1,4 @@
-package br.com.comunicacaomicrosservicosudemy.productapi.config.interception;
+package br.com.comunicacaomicrosservicosudemy.productapi.config.interceptor;
 
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.jwt.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;

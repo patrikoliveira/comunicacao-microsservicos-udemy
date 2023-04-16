@@ -3,12 +3,10 @@ package br.com.comunicacaomicrosservicosudemy.productapi.modules.product.service
 import br.com.comunicacaomicrosservicosudemy.productapi.config.exception.SuccessResponse;
 import br.com.comunicacaomicrosservicosudemy.productapi.config.exception.ValidationException;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.service.CategoryService;
-import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductQuantityDTO;
-import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductRequest;
-import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductResponse;
-import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.ProductStockDTO;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.dto.*;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.model.Product;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.product.repository.ProductRepository;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.sales.client.SalesClient;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.sales.dto.SalesConfirmationDTO;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.sales.enums.SalesStatus;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.sales.rabbitmq.SalesConfirmationSender;
@@ -34,9 +32,10 @@ public class ProductService {
     private ProductRepository productRepository;
     private SupplierService supplierService;
     private CategoryService categoryService;
-
     @Autowired
     private SalesConfirmationSender salesConfirmationSender;
+    @Autowired
+    private SalesClient salesClient;
 
 
     public ProductResponse findByIdResponse(Integer id) {
@@ -215,5 +214,18 @@ public class ProductService {
                     throw new ValidationException("The productID and the quantity must be informed.");
                 }
             });
+    }
+
+    public ProductSalesResponse findProductSales(Integer id) {
+        var product = findById(id);
+        try {
+            var sales = salesClient
+                    .findSalesByProductId(product.getId())
+                    .orElseThrow(() -> new ValidationException("The sales was not found by this product."));
+
+            return ProductSalesResponse.of(product, sales.getSalesIds());
+        } catch (Exception ex) {
+            throw new ValidationException("There was an error trying to get product's sales.");
+        }
     }
 }
