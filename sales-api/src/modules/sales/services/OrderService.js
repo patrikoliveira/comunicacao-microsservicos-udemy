@@ -3,6 +3,7 @@ import { sendMessageToProductStockUpdateQueue } from "../../products/rabbitmq/pr
 import { ACCEPTED, REJECTED, PENDING } from "../status/OrderStatus.js";
 import OrderException from "../exception/OrderException.js";
 import { BAD_REQUEST } from "../../../config/constants/httpStatus.js";
+import ProductClient from "../../products/client/ProductClient.js";
 
 class OrderService {
   async createOrder(req) {
@@ -11,18 +12,14 @@ class OrderService {
       this.validateOrderData(orderData);
 
       const { authUser } = req;
+      const { authorization } = req.headers;
 
-      let order = {
-        status: PENDING,
-        user: authUser,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        products: orderData,
-      };
-      await this.validateStockIsOut(order);
+      const order = this.createInitialOrderData(orderData, authUser);
+
+      await this.validateProductStock(order, authorization);
 
       let createdOrder = await OrderRepository.save(order);
-      sendMessageToProductStockUpdateQueue(createdOrder.products);
+      this.sendMessage(createdOrder);
 
       return {
         status: httpStatus.SUCCESS,
@@ -36,6 +33,16 @@ class OrderService {
     }
   }
 
+  createInitialOrderData(orderData, authUser) {
+    return {
+      status: PENDING,
+      user: authUser,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      products: orderData,
+    };
+  }
+
   async updateOrder(orderMessage) {
     try {
       const order = JSON.parse(orderMessage);
@@ -45,6 +52,7 @@ class OrderService {
 
         if (existingOrder && order.status !== existingOrder.status) {
           existingOrder.status = order.status;
+          existingOrder.updatedAt = new Date();
           await OrderRepository.save(existingOrder);
         }
       } else {
@@ -62,11 +70,22 @@ class OrderService {
     }
   }
 
-  async validateStockIsOut(order) {
-    let stockIsOut = true;
+  async validateProductStock(order, token) {
+    let stockIsOut = await ProductClient.checkProductStock(
+      order.products,
+      token
+    );
     if (stockIsOut) {
       throw new OrderException(BAD_REQUEST, "The stock is out for products.");
     }
+  }
+
+  sendMessage(createdOrder) {
+    const message = {
+      salesId: createdOrder.id,
+      products: createdOrder.products,
+    };
+    sendMessageToProductStockUpdateQueue(message);
   }
 }
 
