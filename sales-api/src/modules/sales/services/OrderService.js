@@ -2,7 +2,11 @@ import OrderRepository from "../repository/OrderRepository.js";
 import { sendMessageToProductStockUpdateQueue } from "../../products/rabbitmq/productStockUpdateSender.js";
 import { ACCEPTED, REJECTED, PENDING } from "../status/OrderStatus.js";
 import OrderException from "../exception/OrderException.js";
-import { BAD_REQUEST } from "../../../config/constants/httpStatus.js";
+import {
+  BAD_REQUEST,
+  INTERNAL_SERVER_ERROR,
+  SUCCESS,
+} from "../../../config/constants/httpStatus.js";
 import ProductClient from "../../products/client/ProductClient.js";
 
 class OrderService {
@@ -22,12 +26,13 @@ class OrderService {
       this.sendMessage(createdOrder);
 
       return {
-        status: httpStatus.SUCCESS,
+        status: SUCCESS,
         createdOrder,
       };
     } catch (err) {
+      console.log(err);
       return {
-        status: err.status ? err.status : httpStatus.INTERNAL_SERVER_ERROR,
+        status: err.status ? err.status : INTERNAL_SERVER_ERROR,
         message: err.message,
       };
     }
@@ -39,7 +44,7 @@ class OrderService {
       user: authUser,
       createdAt: new Date(),
       updatedAt: new Date(),
-      products: orderData,
+      products: orderData.products,
     };
   }
 
@@ -71,11 +76,8 @@ class OrderService {
   }
 
   async validateProductStock(order, token) {
-    let stockIsOut = await ProductClient.checkProductStock(
-      order.products,
-      token
-    );
-    if (stockIsOut) {
+    let stockIsOk = await ProductClient.checkProductStock(order, token);
+    if (!stockIsOk) {
       throw new OrderException(BAD_REQUEST, "The stock is out for products.");
     }
   }
@@ -86,6 +88,33 @@ class OrderService {
       products: createdOrder.products,
     };
     sendMessageToProductStockUpdateQueue(message);
+  }
+
+  async findById(req) {
+    try {
+      const { id } = req.params;
+      this.validateInformedId(id);
+      const existingOrder = await OrderRepository.findById(id);
+      if (!existingOrder) {
+        throw new OrderException(BAD_REQUEST, "The order was not found.");
+      }
+
+      return {
+        status: SUCCESS,
+        existingOrder,
+      };
+    } catch (err) {
+      return {
+        status: err.status ? err.status : INTERNAL_SERVER_ERROR,
+        message: err.message,
+      };
+    }
+  }
+
+  validateInformedId(id) {
+    if (!id) {
+      throw new OrderException(BAD_REQUEST, "The order ID must be informed.");
+    }
   }
 }
 
