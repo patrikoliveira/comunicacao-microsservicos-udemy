@@ -111,9 +111,58 @@ class OrderService {
     }
   }
 
+  async findAll() {
+    try {
+      const orders = await OrderRepository.findAll();
+      if (!orders) {
+        throw new OrderException(BAD_REQUEST, "No orders were found.");
+      }
+
+      return {
+        status: SUCCESS,
+        orders,
+      };
+    } catch (err) {
+      return {
+        status: err.status ? err.status : INTERNAL_SERVER_ERROR,
+        message: err.message,
+      };
+    }
+  }
+
+  async findByProductId(req) {
+    try {
+      const { productId } = req.params;
+      this.validateInformedProductId(productId);
+      const orders = await OrderRepository.findProductId(productId);
+      if (!orders) {
+        throw new OrderException(BAD_REQUEST, "No orders were found.");
+      }
+
+      return {
+        status: SUCCESS,
+        salesIds: orders.map((order) => order.id),
+      };
+    } catch (err) {
+      return {
+        status: err.status ? err.status : INTERNAL_SERVER_ERROR,
+        message: err.message,
+      };
+    }
+  }
+
   validateInformedId(id) {
     if (!id) {
       throw new OrderException(BAD_REQUEST, "The order ID must be informed.");
+    }
+  }
+
+  validateInformedProductId(id) {
+    if (!id) {
+      throw new OrderException(
+        BAD_REQUEST,
+        "The order's product ID must be informed."
+      );
     }
   }
 }

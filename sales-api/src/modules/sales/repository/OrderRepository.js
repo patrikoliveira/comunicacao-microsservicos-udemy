@@ -25,6 +25,14 @@ class OrderRepository {
       return null;
     }
   }
+  async findProductId(productId) {
+    try {
+      return await Order.find({ "products.productId": Number(productId) });
+    } catch (error) {
+      console.error(error.message);
+      return null;
+    }
+  }
 }
 
 export default new OrderRepository();
