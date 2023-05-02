@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import * as httpStatus from "../../../config/constants/httpStatus.js";
 import * as secrets from "../../../config/constants/secrets.js";
 import UserException from "../exception/UserException.js";
-import UserRepository from "../repository/userRepository.js";
+import UserRepository from "../repository/UserRepository.js";
 
 class UserService {
   returnMessageErro(err) {
