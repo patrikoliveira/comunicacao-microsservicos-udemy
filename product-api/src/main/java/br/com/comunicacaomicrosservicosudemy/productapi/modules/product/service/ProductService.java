@@ -241,7 +241,8 @@ public class ProductService {
                     objectMapper.writeValueAsString(response), transactionid, serviceid);
             return response;
         } catch (Exception ex) {
-            throw new ValidationException("There was an error trying to get product's sales.");
+            log.error("Error trying to call Sales-API: {}", ex.getMessage());
+            throw new ValidationException("Error trying to call Sales-API: " + ex.getMessage());
         }
     }
 
@@ -263,6 +264,7 @@ public class ProductService {
             log.info("Response to POST product stock with data {} | [transactionID: {} | serviceID: {}]", objectMapper.writeValueAsString(response), transactionid, serviceid);
             return response;
         } catch (Exception ex) {
+            log.error("Error trying checkProductsStock: {}", ex.getMessage());
             throw  new ValidationException(ex.getMessage());
         }
 
