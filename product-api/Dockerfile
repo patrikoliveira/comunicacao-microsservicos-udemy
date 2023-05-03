@@ -1,4 +1,5 @@
-FROM gradle:8.0.2-jdk19
+#FROM gradle:8.0.2-jdk19
+FROM gradle:7.6.1-jdk17
 COPY --chown=gradle:gradle . .
 WORKDIR .
 RUN gradle build -x test --no-daemon

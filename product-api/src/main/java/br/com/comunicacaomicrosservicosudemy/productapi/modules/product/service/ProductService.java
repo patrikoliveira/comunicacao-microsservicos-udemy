@@ -30,6 +30,7 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 @AllArgsConstructor
 public class ProductService {
     private static final Integer ZERO = 0;
+    private static final String AUTHORIZATION = "Authorization";
     private static final String TRANSACTION_ID = "transactionid";
     private static final String SERVICE_ID = "serviceid";
 
@@ -39,6 +40,7 @@ public class ProductService {
     private final CategoryService categoryService;
     private final SalesConfirmationSender salesConfirmationSender;
     private final SalesClient salesClient;
+    private final ObjectMapper objectMapper;
 
 
     public ProductResponse findByIdResponse(Integer id) {
@@ -228,14 +230,15 @@ public class ProductService {
     private SalesProductResponse getSalesByProductId(Integer productId) {
         try {
             var currentRequest = getCurrentRequest();
+            var token = currentRequest.getHeader(AUTHORIZATION);
             var transactionid = currentRequest.getHeader(TRANSACTION_ID);
             var serviceid = currentRequest.getAttribute(SERVICE_ID);
             log.info("Sending GET request to orders by productId with data {} | [transactionID: {} | serviceID: {}]", productId, transactionid, serviceid);
             var response = salesClient
-                    .findSalesByProductId(productId)
+                    .findSalesByProductId(productId, token, transactionid)
                     .orElseThrow(() -> new ValidationException("The sales was not found by this product."));
             log.info("Recieving response from orders by productId with data {} | [transactionID: {} | serviceID: {}]",
-                    new ObjectMapper().writeValueAsString(response), transactionid, serviceid);
+                    objectMapper.writeValueAsString(response), transactionid, serviceid);
             return response;
         } catch (Exception ex) {
             throw new ValidationException("There was an error trying to get product's sales.");
@@ -247,7 +250,7 @@ public class ProductService {
             var currentRequest = getCurrentRequest();
             var transactionid = currentRequest.getHeader(TRANSACTION_ID);
             var serviceid = currentRequest.getAttribute(SERVICE_ID);
-            log.info("Request to POST product stock with data {} | [transactionID: {} | serviceID: {}]", new ObjectMapper().writeValueAsString(request), transactionid, serviceid);
+            log.info("Request to POST product stock with data {} | [transactionID: {} | serviceID: {}]", objectMapper.writeValueAsString(request), transactionid, serviceid);
             if (isEmpty(request) || isEmpty(request.getProducts())) {
                 throw new ValidationException("The request data and products most be informed.");
             }
@@ -257,7 +260,7 @@ public class ProductService {
                     .forEach(this::validateStock);
 
             var response = SuccessResponse.create("The stock is ok!");
-            log.info("Response to POST product stock with data {} | [transactionID: {} | serviceID: {}]", new ObjectMapper().writeValueAsString(response), transactionid, serviceid);
+            log.info("Response to POST product stock with data {} | [transactionID: {} | serviceID: {}]", objectMapper.writeValueAsString(response), transactionid, serviceid);
             return response;
         } catch (Exception ex) {
             throw  new ValidationException(ex.getMessage());
