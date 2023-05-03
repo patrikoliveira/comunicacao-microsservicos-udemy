@@ -15,7 +15,6 @@ import br.com.comunicacaomicrosservicosudemy.productapi.modules.supplier.service
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,13 +34,11 @@ public class ProductService {
     private static final String SERVICE_ID = "serviceid";
 
 
-    private ProductRepository productRepository;
-    private SupplierService supplierService;
-    private CategoryService categoryService;
-    @Autowired
-    private SalesConfirmationSender salesConfirmationSender;
-    @Autowired
-    private SalesClient salesClient;
+    private final ProductRepository productRepository;
+    private final SupplierService supplierService;
+    private final CategoryService categoryService;
+    private final SalesConfirmationSender salesConfirmationSender;
+    private final SalesClient salesClient;
 
 
     public ProductResponse findByIdResponse(Integer id) {

@@ -2,18 +2,18 @@ package br.com.comunicacaomicrosservicosudemy.productapi.modules.category.contro
 
 import br.com.comunicacaomicrosservicosudemy.productapi.config.exception.SuccessResponse;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.dto.CategoryRequest;
-import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.service.CategoryService;
 import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.dto.CategoryResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import br.com.comunicacaomicrosservicosudemy.productapi.modules.category.service.CategoryService;
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@AllArgsConstructor
 @RequestMapping("/api/category")
 public class CategoryController {
-    @Autowired
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
 
     @PostMapping
     public CategoryResponse save(@RequestBody CategoryRequest request) {

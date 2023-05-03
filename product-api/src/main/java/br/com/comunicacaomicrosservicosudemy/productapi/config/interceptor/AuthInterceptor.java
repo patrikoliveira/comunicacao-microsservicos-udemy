@@ -5,7 +5,6 @@ import br.com.comunicacaomicrosservicosudemy.productapi.modules.jwt.service.JwtS
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -18,7 +17,6 @@ public class AuthInterceptor implements HandlerInterceptor {
     private static final String AUTHORIZATION = "Authorization";
     private static final String TRANSACTION_ID = "transactionid";
 
-    @Autowired
     private final JwtService jwtService;
 
     @Override

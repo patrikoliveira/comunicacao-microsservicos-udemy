@@ -19,10 +19,10 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 @Service
 @AllArgsConstructor(onConstructor_ = { @Lazy})
 public class CategoryService {
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
     @Lazy
-    private ProductService productService;
+    private final ProductService productService;
 
     public Category findById(Integer id) {
         validateInformedId(id);

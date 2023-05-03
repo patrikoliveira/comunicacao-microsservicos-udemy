@@ -19,10 +19,10 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 @Service
 @AllArgsConstructor(onConstructor_ = { @Lazy })
 public class SupplierService {
-    private SupplierRepository supplierRepository;
+    private final SupplierRepository supplierRepository;
 
     @Lazy
-    public ProductService productService;
+    public final ProductService productService;
 
     public SupplierResponse findByIdResponse(Integer id) {
         return SupplierResponse.of(findById(id));
